@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        #qrcode-container {
+            margin: 20px auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            background-color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #qrcode-container img {
+            max-width: 100%;
+            height: auto;
+            border: 5px solid white;
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 768px) {
+            #qrcode-container {
+                width: 100%;
+            }
+            .bg-white {
+                background-color: #1a202c;
+            }
+            .text-gray-800{
+               color: #f7fafc;
+            }
+            .text-gray-700{
+                color: #cbd5e0;
+            }
+            #text{
+                 background-color: #2d3748;
+                 color: #f7fafc;
+                 border-color: #4a5568;
+                /* Remove resizable control */
+                resize: none;
+                overflow: hidden;  /* Hide scrollbars */
+                min-height: 2.5rem; /* Ensure it has some initial height */
+            }
+            #text:focus{
+                border-color: #63b3ed;
+                box-shadow: 0 0 0 3px rgba(108, 180, 255, 0.3);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex justify-center items-center min-h-screen dark:bg-gray-900">
+    <div class="bg-white rounded-lg shadow-md p-6 w-full max-w-md dark:bg-gray-800">
+        <h1 class="text-2xl font-semibold text-gray-800 mb-2 text-center dark:text-gray-100">QR Code Only Generator</h1>
+        <p class="text-sm text-gray-600 mb-6 text-center dark:text-gray-400">No hidden trackers. No subscriptions required. No logins to create. <br>Simply enter your website URL or alphanumeric text and it will be converted to a QR code image for download.</p>
+
+        <div class="mb-4">
+            <label for="text" class="block text-gray-700 text-sm font-bold mb-2 dark:text-gray-300">Enter text or URL:</label>
+            <textarea id="text" placeholder="Enter your text or URL here..." class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:focus:border-blue-400"></textarea>
+        </div>
+
+        <div id="qrcode-container" class="flex justify-center mb-4">
+        </div>
+
+        <div class="flex space-x-4">
+            <button id="generate" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full dark:bg-blue-600 dark:hover:bg-blue-800">Generate QR Code</button>
+            <button id="save" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600 disabled">Save QR Code</button>
+        </div>
+    </div>
+
+    <script>
+        const textInput = document.getElementById('text');
+        const qrcodeContainer = document.getElementById('qrcode-container');
+        const generateButton = document.getElementById('generate');
+        const saveButton = document.getElementById('save');
+
+        let qrcodeInstance = null;
+
+        function generateQrCode() {
+            const text = textInput.value.trim();
+
+            if (!text) {
+                qrcodeContainer.innerHTML = '<p class="text-red-500 text-sm italic">Please enter text to generate QR Code.</p>';
+                saveButton.disabled = true;
+                saveButton.classList.remove('bg-green-500', 'hover:bg-green-700');
+                saveButton.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+                return;
+            }
+
+            qrcodeContainer.innerHTML = '';
+            saveButton.disabled = false;
+            saveButton.classList.remove('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+            saveButton.classList.add('bg-green-500', 'hover:bg-green-700');
+
+            try {
+                qrcodeInstance = new QRCode(qrcodeContainer, {
+                    text: text,
+                    width: 256,
+                    height: 256,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+            } catch (error) {
+                console.error("Error generating QR Code:", error);
+                qrcodeContainer.innerHTML = '<p class="text-red-500 text-sm italic">Error generating QR Code. Please check your input.</p>';
+                saveButton.disabled = true;
+                saveButton.classList.remove('bg-green-500', 'hover:bg-green-700');
+                saveButton.classList.add('bg-gray-300', 'hover:bg-gray-400', 'text-gray-800');
+            }
+        }
+
+        generateButton.addEventListener('click', generateQrCode);
+
+        textInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                generateQrCode();
+            }
+        });
+
+        textInput.addEventListener('input', () => {
+            textInput.style.height = 'auto';
+            textInput.style.height = `${textInput.scrollHeight}px`;
+        });
+
+        saveButton.addEventListener('click', () => {
+            if (!qrcodeInstance) return;
+
+            const canvas = qrcodeContainer.querySelector('canvas');
+            if (!canvas) {
+                console.error("Canvas element not found");
+                return;
+            }
+
+            const dataURL = canvas.toDataURL('image/jpeg');
+            const filename = `${textInput.value.substring(0, 20)}-${new Date().toISOString().slice(0, 10)}-qrcode.jpg`;
+
+            // Create a link and trigger download
+            const a = document.createElement('a');
+            a.href = dataURL;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    </script>
+</body>
+</html>
